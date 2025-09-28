@@ -24,11 +24,11 @@ This repository provides a **5‑step pipeline** to convert a folder of `.wav` a
 
 The scripts are numbered in order of execution:
 
-1. [`s1_audio_normalize.py`](./workflow/1_audio_normalize.py)  
-2. [`s2_wav2encodec24.py`](./workflow/2_wav2encodec24.py)  
-3. [`s3_sidecar_init.py`](./workflow/3_sidecar_init.py)  
-4. [`s4_sidecar_add.py`](./workflow/4_sidecar_add.py)  
-5. [`s5_build_dataset_from_folder.py`](./workflow/5_build_dataset_from_folder.py)  
+1. [`s1_audio_normalize.py`](./workflow/s1_audio_normalize.py)  
+2. [`s2_wav2encodec24.py`](./workflow/s2_wav2encodec24.py)  
+3. [`s3_sidecar_init.py`](./workflow/s3_sidecar_init.py)  
+4. [`s4_sidecar_add.py`](./workflow/s4_sidecar_add.py)  
+5. [`s5_build_dataset_from_folder.py`](./workflow/s5_build_dataset_from_folder.py)  
 
 You may also use [`sidecar_audit.py`](./workflow/sidecar_audit.py) at any point to check sidecar integrity. 
 
