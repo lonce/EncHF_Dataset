@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
-import argparse
 import os
+os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
+os.environ.setdefault("TRANSFORMERS_NO_FLAX", "1")
+
+import argparse
 import random
 from pathlib import Path
 from typing import Iterable, Tuple, List
