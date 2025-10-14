@@ -6,7 +6,7 @@
 import argparse, csv, sys
 from pathlib import Path
 from tqdm import tqdm
-from sidecar_lib import (
+from .sidecar_lib import (
     walk_ecdc, cond_path_for, ensure_sidecar_skeleton,
     infer_frames_and_codebooks, shard_ok
 )

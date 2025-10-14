@@ -12,7 +12,7 @@ from typing import List, Tuple, Dict, Optional
 import numpy as np
 from tqdm import tqdm
 
-from sidecar_lib import (
+from .sidecar_lib import (
     walk_ecdc,
     cond_path_for,
     load_sidecar,

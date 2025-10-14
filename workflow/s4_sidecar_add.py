@@ -7,9 +7,9 @@ from pathlib import Path
 from typing import Dict, List
 import numpy as np
 from tqdm import tqdm
-from sidecar_lib import SIDECAR_JSON_SUFFIX
+from .sidecar_lib import SIDECAR_JSON_SUFFIX
 
-from sidecar_lib import (
+from .idecar_lib import (
     FPS, atomic_save_json, atomic_save_npy, cond_path_for, ensure_sidecar_skeleton,
     infer_frames_and_codebooks, load_sidecar, merge_features, shard_ok, walk_ecdc,
 )
