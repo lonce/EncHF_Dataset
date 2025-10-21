@@ -27,6 +27,9 @@ dependencies = [
   "accelerate>=0.30",
   "ipympl>=0.9",
   "matplotlib>=3.5",
+  "librosa",
+  "soundfile",
+  "sounddevice"
 ]
 
 [project.optional-dependencies]

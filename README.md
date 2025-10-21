@@ -4,20 +4,23 @@ This workflow is designed to create datasets of audio files coded with [Meta's E
 
 # Installation
 
+```
+git clone https://github.com/lonce/EncHF_Dataset
+cd EncHF_Dataset
+```
+You might want to create a basic conda environment before installing that packages. Then:
 ```bash
 # Base tools
 pip install "git+https://github.com/lonce/EncHF_Dataset@main"
 ```
-If you want to do an editable install (to add your own parameter producers for example):
+or if you want an editable install:
 ```
-git clone https://github.com/lonce/EncHF_Dataset
-cd EncHF_Dataset
-pip install -e .[audio]
+pip install -e .
 ```
-If you do an editable install, you will also find a [paramproducers/README_paramproducers.md](paramproducers/README_paramproducers.md) to help write new parameter producers.
+
 # Data Preparation Workflow
 
-This repository provides a **5‑step pipeline** to convert a folder of `.wav` audio files into a Hugging Face `DatasetDict` that can be consumed by the network’s dataloaders. Each stage is implemented as a standalone script, so you can run them one by one, inspect the outputs, and rerun only the stages you need. ("sidecar" refers to the strategy of storing the conditional parameters and metatdata in filenames parallel to the audio data files).
+This repository provides a **4‑step pipeline** to convert a folder of `.wav` audio files into a Hugging Face `DatasetDict` that can be consumed by the network’s dataloaders. Each stage is implemented as a standalone script, so you can run them one by one, inspect the outputs, and rerun only the stages you need. ("sidecar" refers to the strategy of storing the conditional parameters and metatdata in filenames parallel to the audio data files).
 
 The scripts are numbered in order of execution:
 
