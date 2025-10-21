@@ -22,14 +22,11 @@ dependencies = [
   "numpy>=1.22",
   "tqdm>=4.66",
   "datasets>=2.14",
-  "torch>=2.1",
-  "transformers>=4.40",
-  "accelerate>=0.30",
-  "ipympl>=0.9",
-  "matplotlib>=3.5",
 ]
 
 [project.optional-dependencies]
+torch = ["torch>=2.1"]
+audio = ["transformers>=4.40", "accelerate>=0.30", "torch>=2.1"]
 dev = ["pytest>=7", "ruff>=0.5", "mypy>=1.5"]
 
 [project.urls]

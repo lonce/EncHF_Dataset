@@ -7,6 +7,9 @@ This workflow is designed to create datasets of audio files coded with [Meta's E
 ```bash
 # Base tools
 pip install "git+https://github.com/lonce/EncHF_Dataset@main"
+
+# With extras (adds transformers/torch for audio producer & torch CLIs)
+pip install "enc-hf-workflow[audio] @ git+https://github.com/<you>/EncHF_Dataset@main"
 ```
 If you want to do an editable install (to add your own parameter producers for example):
 ```
@@ -21,10 +24,11 @@ This repository provides a **5‑step pipeline** to convert a folder of `.wav` a
 
 The scripts are numbered in order of execution:
 
-1. [`s1_audio_normalize.py`](./workflow/s1_audio_normalize.py)  - normalizes for rms and sr
-2. [`s2_wav2encodec24.py`](./workflow/s2_wav2encodec24.py)   - codes wav files with Encodec
-3. [`roll_your_own.py`] write param files using workflow.writeParamArrays.py (see MakeSidecars.ipynb as an example of how to write the params)
-5. [`s5_build_dataset_from_folder.py`](./workflow/s5_build_dataset_from_folder.py)  - creates HF dataset ready for loading
+1. [`s1_audio_normalize.py`](./workflow/s1_audio_normalize.py)  
+2. [`s2_wav2encodec24.py`](./workflow/s2_wav2encodec24.py)  
+3. [`s3_sidecar_init.py`](./workflow/s3_sidecar_init.py)  
+4. [`s4_sidecar_add.py`](./workflow/s4_sidecar_add.py)  
+5. [`s5_build_dataset_from_folder.py`](./workflow/s5_build_dataset_from_folder.py)  
 
 You may also use [`sidecar_audit.py`](./workflow/sidecar_audit.py) at any point to check sidecar integrity. 
 
@@ -87,44 +91,53 @@ python s2_wav2encodec24.py ./normed ./ecdc_out --dry-run
 
 ---
 
-## Step 3 — Add Parameter files
+## Step 3 — Initialize Sidecar Skeletons
 
-Parameter files have the same name as the data file. A .npy file has the frame-length lists of parameter values, and a .json file has the necessary meta-data.  You will create the features data structure as in this example:
+**Script:** `s3_sidecar_init.py`
 
-feats = {
-  "gain_db": {                                  # parameter name
-      "values": [numpy array],        # only required attribute, same length as Encodec frames
-      "units": "dB", 
-      "doc_string": "Per-frame gain in decibels"
-  },
-  "scene_id": {
-      "values": np.full(numFrames, 7, np.float32),
-      "min": 7, "max": 7,             # used by dataloader to normalize for NN training
-      "doc_string": "Integer scene label"
-  },
-  "energy": np.random.rand(numFrames).astype(np.float32)  # stats auto-computed
-}
+Creates empty **sidecar files** (`.cond.npy` and `.cond.json`) aligned to each `.ecdc`. These are placeholders for conditioning parameters.
 
-Then write the parameters (feat) like so:
+```bash
+python s3_sidecar_init.py   --audio-root ./ecdc_out   --cond-root ./params   --manifest-csv ./manifest.csv
+```
 
-write_sidecar_features_for_rel(
-    root=Path("/datasets/waterfill"),
-    ecdc_rel=Path("ecdc/II_Double.ecdc"),
-    features=feats,
-    fps=75.0,
-    mode="overwrite",
-    require_ecdc_exists=False,  # set True if you want a safety check
-)
+- Each `.ecdc` gets a matching `.cond.npy` with shape `[T, 0]` (frames, no features yet).  
+- Manifest CSV (optional) records alignment.  
+- Options for sharding (`--shard-index`, `--shard-count`) for parallel runs.
 
+---
 
+## Step 4 — Add Features with Param Producers
 
-Here is an example of doing that for one data file in a jupyter notebook with checks and visualizations:
+These are intended as examples for how to get parameters into the npy + json metadata file format that a dataloader can read (and less for doing the work of creating or extracting the parameters directly from the audio). They might be usable as is: If you have multiple constant parameters per file and the parameter names and values are embedded in the file names (e.g. foo\_pitch\_64.00_amp\_.75) then check out paramproducers/from_file.py. You can use paramproducers/lin.py to label frames with a normalized "position" parameter. You will likely have to write your own "sidecar param producer" to get your parameters from whatever format you have them in into this sidecar format by following these examples. 
 
-**Script:** `MakeSidecars.ipynb`
+**Script:** `s4_sidecar_add.py`
 
+Populates sidecar `.cond.npy` with **per‑frame conditioning features** using plug‑in producers from `paramproducers/`.
 
+```bash
+python s4_sidecar_add.py   --audio-root ./ecdc_out   --cond-root ./params   --producers-dir ./paramproducers   --producer const --producer lin   --const scene_id=7   --lin gain=0:1   --mode append --create-missing
+```
 
-## Step 4 — Build Hugging Face Dataset
+- Producers generate features such as constants, linear ramps, values parsed from filenames, or audio‑derived features.  
+- Multiple producers can be chained.  
+- `--mode append` keeps existing features; `--mode overwrite` replaces them.
+
+Discover available producers:
+
+```bash
+python s4_sidecar_add.py --producers-dir ./paramproducers --list-producers
+```
+
+Get help for a specific producer:
+
+```bash
+python s4_sidecar_add.py --producers-dir ./paramproducers --producer const --help
+```
+
+---
+
+## Step 5 — Build Hugging Face Dataset
 
 **Script:** `s5_build_dataset_from_folder.py`
 
@@ -168,10 +181,13 @@ python s1_audio_normalize.py ./raw ./norm
 # 2. Encode
 python s2_wav2encodec24.py ./norm ./ecdc --recursive --verify
 
-# 3. Extract/generate per-frame parameters and Write sidecars
-python roll_your_own.py 
+# 3. Init sidecars
+python s3_sidecar_init.py --audio-root ./ecdc --cond-root ./params
 
-# 4. Build dataset
+# 4. Add parameters
+python s4_sidecar_add.py --audio-root ./ecdc --cond-root ./params   --producers-dir ./paramproducers --producer from_filename   --from-filename --filename-regex '_(?P<name>\w+)_(?P<value>-?\d+(\.\d+)?)'
+
+# 5. Build dataset
 python s5_build_dataset_from_folder.py ./ecdc ./hf_dataset   --split train --materialize link --verify
 
 # (Optional) Audit
@@ -182,10 +198,11 @@ python sidecar_audit.py --audio-root ./ecdc --cond-root ./params
 
 ## Tips & Pitfalls
 
-- Probably best to  normalize first (Step 1) before encoding, otherwise loudness differences affect downstream features.  
+- Always normalize first (Step 1) before encoding, otherwise loudness differences affect downstream features.  
 - Use `--dry-run` in Step 2 before heavy processing.  
 - Sidecars are small; you can safely delete and regenerate them without touching `.ecdc`.  
-- After Step 4, you can copy or publish the Hugging Face dataset directory.
+- Keep your `paramproducers/` under version control — they define the conditioning schema.  
+- After Step 5, you can copy or publish the Hugging Face dataset directory.
 
 
 
@@ -193,6 +210,8 @@ If you pip-installed this repository, you should also have these wf- shortcuts:
 ```bash
 wf-audio-normalize --help
 wf-wav2encodec24 --help
+wf-sidecar-init --help
+wf-sidecar-add --help
 wf-build-dataset --help
 wf-sidecar-audit --help
 wf-inspect --help
