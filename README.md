@@ -8,7 +8,13 @@ This workflow is designed to create datasets of audio files coded with [Meta's E
 git clone https://github.com/lonce/EncHF_Dataset
 cd EncHF_Dataset
 ```
-You might want to create a basic conda environment before installing that packages. Then:
+You might want to create a basic conda environment before installing that packages:
+conda create --name encHF pytorch
+
+conda activate encHF
+
+Then:
+
 ```bash
 # Base tools
 pip install "git+https://github.com/lonce/EncHF_Dataset@main"

@@ -30,6 +30,7 @@ dependencies = [
   "librosa",
   "soundfile",
   "sounddevice"
+  "jupyterlab"
 ]
 
 [project.optional-dependencies]
